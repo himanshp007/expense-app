@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>EXPENSE TRACKER APP</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  </head>
+  <body>
+    <h1><strong>EXPENSE TRACKER APP</strong> </h1>
+    <form id="form" onsubmit="handleFormSubmit(event)">
+      <label for amount>Expense Amount</label>
+      <input title='Amount' placeholder='Expense Amount' type='text' id='amount' name="amount">
+      <label for discription>Discription</label>
+      <input title='Describe the expense' placeholder='Describe the expense' type='text' id='discription' name="discription">
+      <label for category>Category</label>
+      <select title="Choose a Category" name='category' id='category'>
+          <option value='movie'>Movie</option>
+          <option value="food">Food</option>
+          <option value="fuel">Fuel</option>
+      </select>
+      <button type="submit">Add Expense</button>
+    </form>
+    <ul id="booking-list"></ul>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+      
+      function handleFormSubmit(event){
+
+      event.preventDefault();
+    
+      const expenseDetails = {
+        'amount': event.target.amount.value,
+        'discription': event.target.discription.value,
+        'category': event.target.category.value
+      }
+      
+    
+      axios
+        .post('http://localhost:3000/expense/add-expense', expenseDetails)
+        .then((response) => displayExpense())
+        .catch((err) => console.log(err));
+    
+    
+      document.getElementById('amount').value = '';
+      document.getElementById('discription').value = '';
+      document.getElementById('category').value = '';
+    
+    };
+
+    function displayExpense(){
+    
+      axios
+        .get('http://localhost:3000/expense/get-expense')
+        .then((response) => {
+    
+          const allItems = document.querySelector('ul');
+    
+          allItems.innerHTML = '';
+    
+          const data = response.data.expenses;
+    
+          data.forEach((item) => {
+            const expenseItem = document.createElement('li');
+            
+    
+            const editBtn = document.createElement("button");
+            editBtn.textContent = 'Edit';
+            editBtn.classList.add('edit');
+    
+            const deleteBtn = document.createElement("button");
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.classList.add('delete');
+    
+            const detail = document.createElement('p');
+            detail.innerHTML = `${item.amount}- ${item.discription} - ${item.category}`;
+    
+            editBtn.addEventListener('click', function() {
+              // Populate form fields with current data
+              editExpense(item.id, item.amount, item.discription, item.category);
+            });
+    
+            deleteBtn.addEventListener('click', function(){
+              deleteExpense(item.id);
+            })
+            
+            detail.appendChild(editBtn);
+            detail.appendChild(deleteBtn);
+            expenseItem.appendChild(detail);
+            allItems.appendChild(expenseItem);
+          })
+        })
+        .catch((err) => console.log(err));
+    
+    }
+
+    function editExpense(id, amount, discription, category) {
+      document.getElementById('amount').value = amount;
+      document.getElementById('discription').value = discription;
+      document.getElementById('category').value = category;
+      axios
+        .put(`http://localhost:3000/expense/edit-expense/${id}`)
+        .then((res) => {
+          displayExpense();
+        })
+        .catch((err) => console.log(err))
+              
+    };
+
+
+    function deleteExpense(id) {
+      axios
+                .delete(`http://localhost:3000/expense/delete-expense/${id}`)
+                .then((res) => {
+                  displayExpense();
+                })
+                .catch((err) => console.log(err))
+    };
+    
+    
+    displayExpense();
+
+    
+
+  </script>
+  </body>
+</html>
